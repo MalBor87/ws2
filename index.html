@@ -1,5 +1,394 @@
 <!DOCTYPE html>
-<html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Výučbový Portál & Tahák: HTML, PHP, SQL, ESP WiFi</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f4f6f9;
+            --card-bg: #ffffff;
+            --code-bg: #1e1e1e;
+            --code-color: #d4d4d4;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.6rem;
+        }
+
+        nav {
+            background: #34495e;
+            display: flex;
+            padding: 0 40px;
+            overflow-x: auto;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            padding: 15px 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+
+        nav button:hover, nav button.active {
+            background-color: var(--accent);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95rem;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .interactive-box {
+            background: #e8f4f8;
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Tahák a Prezentácia: HTML / PHP / SQL / ESP WiFi</h1>
+    </header>
+
+    <nav>
+        <button class="active" onclick="openTab('html-tab')">1. HTML & Formuláre</button>
+        <button onclick="openTab('php-tab')">2. PHP Logika</button>
+        <button onclick="openTab('sql-tab')">3. SQL Databázy</button>
+        <button onclick="openTab('esp-tab')">4. ESP WiFi (AP / STA)</button>
+        <button onclick="openTab('tools-tab')">⚙️ Interaktívny ESP Generator</button>
+    </nav>
+
+    <div class="container">
+
+        <!-- TAB 1: HTML -->
+        <div id="html-tab" class="tab-content active">
+            <div class="card">
+                <h2>Základná Kostra a Formulár (Radio, Datalist, Hidden)</h2>
+                <p>Ukážka formulára s rôznymi typmi vstupov vrátane prenosu stavu pomocou skrytých polí[cite: 1, 4]:</p>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;form action="action.php" method="GET"&gt;
+    &lt;!-- Textový vstup a dátum --&gt;
+    &lt;label for="meno"&gt;Meno:&lt;/label&gt;
+    &lt;input type="text" id="meno" name="meno" required&gt;&lt;br&gt;
+
+    &lt;label for="narodenie"&gt;Dátum narodenia:&lt;/label&gt;
+    &lt;input type="date" id="narodenie" name="narodenie"&gt;&lt;br&gt;
+
+    &lt;!-- Skryté pole (hidden) na prenos stavu/počítadla --&gt;
+    &lt;input type="hidden" name="hid" value="0"&gt;
+
+    &lt;!-- Výberový zoznam (Datalist) --&gt;
+    &lt;label for="kraj"&gt;Kraj:&lt;/label&gt;
+    &lt;input list="kraje" id="kraj" name="kraj"&gt;
+    &lt;datalist id="kraje"&gt;
+        &lt;option value="Košický"&gt;
+        &lt;option value="Prešovský"&gt;
+        &lt;option value="Bratislavský"&gt;
+    &lt;/datalist&gt;&lt;br&gt;
+
+    &lt;!-- Radio tlačidlá - rovnaké name zabezpečí vzájomné vylúčenie --&gt;
+    &lt;input type="radio" id="sr" name="oblast" value="SR"&gt;
+    &lt;label for="sr"&gt;Slovensko&lt;/label&gt;
+    &lt;input type="radio" id="eu" name="oblast" value="EU"&gt;
+    &lt;label for="eu"&gt;EÚ&lt;/label&gt;&lt;br&gt;
+
+    &lt;input type="submit" value="Odoslať"&gt;
+&lt;/form&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- TAB 2: PHP -->
+        <div id="php-tab" class="tab-content">
+            <div class="card">
+                <h2>PHP Kontrola Vstupov a Presmerovanie (`header`)</h2>
+                <p>Prijatie údajov, overenie vyplnenia a bezpečné presmerovanie späť bez výstupu[cite: 1, 2]:</p>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
+// Kontrola, či sú povinné vstupy vyplnené
+if (empty($_GET['meno']) || empty($_GET['kraj'])) {
+    // Okamžité presmerovanie s chybovým parametrom
+    header('Location: index.php?chyba=1');
+    exit(); // Dôležité: Zastaví ďalšie vykonávanie skriptu
+}
+
+echo "Vítaj, " . htmlspecialchars($_GET['meno']);
+?&gt;</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>Výpočet Rozdielu Dátumov a Vek</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
+if (!empty($_GET['vek1']) && !empty($_GET['vek2'])) {
+    $d1 = new DateTime($_GET['vek1']);
+    $d2 = new DateTime($_GET['vek2']);
+    $rozdiel = date_diff($d1, $d2);
+
+    echo "Rozdiel je " . $rozdiel->format('%a') . " dní.";
+}
+?&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- TAB 3: SQL -->
+        <div id="sql-tab" class="tab-content">
+            <div class="card">
+                <h2>Vkladanie dát (INSERT s `mysqli_insert_id`)</h2>
+                <p>Prepojenie tabuliek `Person` a `Address` bez nutnosti manuálneho zadávania ID[cite: 1, 4]:</p>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
+require 'db.php';
+
+$meno = mysqli_real_escape_string($conn, $_POST['meno']);
+$narod = !empty($_POST['narodeniny']) ? "'" . $_POST['narodeniny'] . "'" : "NULL";
+
+// 1. Vloženie Osoby
+$sql = "INSERT INTO Person (firstname, birthday) VALUES ('$meno', $narod);";
+mysqli_query($conn, $sql);
+
+// 2. Získanie automaticky vygenerovaného ID osobe
+$person_id = mysqli_insert_id($conn);
+
+// 3. Vloženie Adresy pre dané person_id
+$sqlAddress = "INSERT INTO Address (person_id, street, city) VALUES ($person_id, 'Hlavná 5', 'Košice');";
+mysqli_query($conn, $sqlAddress);
+?&gt;</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>Bezpečné vyhľadávanie cez Prepared Statements (`LIKE`)</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
+$hladaj = '%' . $_GET['najdi'] . '%';
+
+$sql = "SELECT id, firstname, lastname FROM Person WHERE firstname LIKE ?";
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "s", $hladaj);
+mysqli_stmt_execute($stmt);
+
+$result = mysqli_stmt_get_result($stmt);
+while ($row = mysqli_fetch_assoc($result)) {
+    echo $row['firstname'] . " " . $row['lastname'] . "&lt;br&gt;";
+}
+mysqli_stmt_close($stmt);
+?&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- TAB 4: ESP -->
+        <div id="esp-tab" class="tab-content">
+            <div class="card">
+                <h2>1. ESP ako Station (STA) – Pripojenie k domácej Wi-Fi</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt; // Pre ESP8266 použi &lt;ESP8266WiFi.h&gt;
+
+const char* ssid = "Moja_Domaca_WiFi";
+const char* password = "HesloDoWiFi123";
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  Serial.print("Pripájam sa k WiFi...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("\nPripojené!");
+  Serial.print("IP Adresa ESP: ");
+  Serial.println(WiFi.localIP());
+}
+
+void loop() {}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>2. ESP ako Access Point (AP) – ESP vytvorí vlastnú sieť</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+
+const char* ap_ssid = "ESP_Konfiguracia";
+const char* ap_password = "heslo_ap_123"; // min 8 znakov
+
+void setup() {
+  Serial.begin(115200);
   
-  ahoj
+  // Spustenie AP režimu
+  WiFi.softAP(ap_ssid, ap_password);
+
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("Access Point spustený! IP Adresa: ");
+  Serial.println(myIP);
+}
+
+void loop() {}</code></pre>
+            </div>
+        </div>
+
+        <!-- TAB 5: TOOLS -->
+        <div id="tools-tab" class="tab-content">
+            <div class="card">
+                <h2>⚙️ Interaktívny Generátor C++ Kódu pre ESP</h2>
+                <p>Zadaj požadované údaje pre Wi-Fi a okamžite získaš pripravený kód pre Arduino IDE:</p>
+
+                <div class="interactive-box">
+                    <label>Režim Wi-Fi:</label>
+                    <select id="gen-mode" onchange="generateESPCode()">
+                        <option value="STA">Station (Pripojenie k routeru)</option>
+                        <option value="AP">Access Point (Vlastná Wi-Fi sieť)</option>
+                    </select>
+
+                    <label>SSID (Názov siete):</label>
+                    <input type="text" id="gen-ssid" value="MojaSiet" oninput="generateESPCode()">
+
+                    <label>Heslo:</label>
+                    <input type="password" id="gen-pass" value="mojeHeslo123" oninput="generateESPCode()">
+                </div>
+
+                <h3>Vygenerovaný C++ kód:</h3>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code id="esp-output-code"></code></pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function copyCode(btn) {
+            const code = btn.nextElementSibling.innerText;
+            navigator.clipboard.writeText(code);
+            btn.innerText = "Kopírované!";
+            setTimeout(() => btn.innerText = "Kopírovať", 2000);
+        }
+
+        function generateESPCode() {
+            const mode = document.getElementById('gen-mode').value;
+            const ssid = document.getElementById('gen-ssid').value;
+            const pass = document.getElementById('gen-pass').value;
+            
+            let code = "";
+            if (mode === "STA") {
+                code = `#include <WiFi.h>\n\nconst char* ssid = "${ssid}";\nconst char* password = "${pass}";\n\nvoid setup() {\n  Serial.begin(115200);\n  WiFi.mode(WIFI_STA);\n  WiFi.begin(ssid, password);\n\n  while (WiFi.status() != WL_CONNECTED) {\n    delay(500);\n    Serial.print(".");\n  }\n  Serial.println("\\nPripojené! IP: " + WiFi.localIP().toString());\n}\n\nvoid loop() {}`;
+            } else {
+                code = `#include <WiFi.h>\n\nconst char* ap_ssid = "${ssid}";\nconst char* ap_password = "${pass}";\n\nvoid setup() {\n  Serial.begin(115200);\n  WiFi.softAP(ap_ssid, ap_password);\n  Serial.println("AP spustený! IP: " + WiFi.softAPIP().toString());\n}\n\nvoid loop() {}`;
+            }
+
+            document.getElementById('esp-output-code').innerText = code;
+        }
+
+        // Inicializácia generátora kódu pri načítaní
+        generateESPCode();
+    </script>
+</body>
 </html>
