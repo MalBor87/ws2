@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Výučbový Portál & Tahák: HTML, PHP, SQL, ESP WiFi</title>
+    <title>Pomoc s HTML, PHP, SQL, ESP WiFi & Siete</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -137,34 +137,22 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-
-        .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-
-        .btn:hover {
-            background: #2980b9;
-        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Tahák a Prezentácia: HTML / PHP / SQL / ESP WiFi</h1>
+        <h1>Pomoc s HTML / PHP / SQL / ESP WiFi & Siete</h1>
     </header>
 
     <nav>
         <button class="active" onclick="openTab('html-tab')">1. HTML & Formuláre</button>
         <button onclick="openTab('php-tab')">2. PHP Logika</button>
         <button onclick="openTab('sql-tab')">3. SQL Databázy</button>
-        <button onclick="openTab('esp-tab')">4. ESP WiFi (AP / STA)</button>
-        <button onclick="openTab('tools-tab')">⚙️ Interaktívny ESP Generator</button>
+        <button onclick="openTab('esp-wifi-tab')">4. ESP WiFi (AP / STA)</button>
+        <button onclick="openTab('esp-tcp-udp-tab')">5. ESP TCP & UDP</button>
+        <button onclick="openTab('esp-http-tab')">6. ESP HTTP Klient</button>
+        <button onclick="openTab('tools-tab')">⚙️ ESP Generator</button>
     </nav>
 
     <div class="container">
@@ -173,19 +161,15 @@
         <div id="html-tab" class="tab-content active">
             <div class="card">
                 <h2>Základná Kostra a Formulár (Radio, Datalist, Hidden)</h2>
-                <p>Ukážka formulára s rôznymi typmi vstupov vrátane prenosu stavu pomocou skrytých polí[cite: 1, 4]:</p>
                 <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;form action="action.php" method="GET"&gt;
-    &lt;!-- Textový vstup a dátum --&gt;
     &lt;label for="meno"&gt;Meno:&lt;/label&gt;
     &lt;input type="text" id="meno" name="meno" required&gt;&lt;br&gt;
 
     &lt;label for="narodenie"&gt;Dátum narodenia:&lt;/label&gt;
     &lt;input type="date" id="narodenie" name="narodenie"&gt;&lt;br&gt;
 
-    &lt;!-- Skryté pole (hidden) na prenos stavu/počítadla --&gt;
     &lt;input type="hidden" name="hid" value="0"&gt;
 
-    &lt;!-- Výberový zoznam (Datalist) --&gt;
     &lt;label for="kraj"&gt;Kraj:&lt;/label&gt;
     &lt;input list="kraje" id="kraj" name="kraj"&gt;
     &lt;datalist id="kraje"&gt;
@@ -194,7 +178,6 @@
         &lt;option value="Bratislavský"&gt;
     &lt;/datalist&gt;&lt;br&gt;
 
-    &lt;!-- Radio tlačidlá - rovnaké name zabezpečí vzájomné vylúčenie --&gt;
     &lt;input type="radio" id="sr" name="oblast" value="SR"&gt;
     &lt;label for="sr"&gt;Slovensko&lt;/label&gt;
     &lt;input type="radio" id="eu" name="oblast" value="EU"&gt;
@@ -209,29 +192,13 @@
         <div id="php-tab" class="tab-content">
             <div class="card">
                 <h2>PHP Kontrola Vstupov a Presmerovanie (`header`)</h2>
-                <p>Prijatie údajov, overenie vyplnenia a bezpečné presmerovanie späť bez výstupu[cite: 1, 2]:</p>
                 <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
-// Kontrola, či sú povinné vstupy vyplnené
 if (empty($_GET['meno']) || empty($_GET['kraj'])) {
-    // Okamžité presmerovanie s chybovým parametrom
     header('Location: index.php?chyba=1');
-    exit(); // Dôležité: Zastaví ďalšie vykonávanie skriptu
+    exit();
 }
 
 echo "Vítaj, " . htmlspecialchars($_GET['meno']);
-?&gt;</code></pre>
-            </div>
-
-            <div class="card">
-                <h2>Výpočet Rozdielu Dátumov a Vek</h2>
-                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
-if (!empty($_GET['vek1']) && !empty($_GET['vek2'])) {
-    $d1 = new DateTime($_GET['vek1']);
-    $d2 = new DateTime($_GET['vek2']);
-    $rozdiel = date_diff($d1, $d2);
-
-    echo "Rozdiel je " . $rozdiel->format('%a') . " dní.";
-}
 ?&gt;</code></pre>
             </div>
         </div>
@@ -240,101 +207,286 @@ if (!empty($_GET['vek1']) && !empty($_GET['vek2'])) {
         <div id="sql-tab" class="tab-content">
             <div class="card">
                 <h2>Vkladanie dát (INSERT s `mysqli_insert_id`)</h2>
-                <p>Prepojenie tabuliek `Person` a `Address` bez nutnosti manuálneho zadávania ID[cite: 1, 4]:</p>
                 <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
 require 'db.php';
 
 $meno = mysqli_real_escape_string($conn, $_POST['meno']);
 $narod = !empty($_POST['narodeniny']) ? "'" . $_POST['narodeniny'] . "'" : "NULL";
 
-// 1. Vloženie Osoby
 $sql = "INSERT INTO Person (firstname, birthday) VALUES ('$meno', $narod);";
 mysqli_query($conn, $sql);
 
-// 2. Získanie automaticky vygenerovaného ID osobe
 $person_id = mysqli_insert_id($conn);
 
-// 3. Vloženie Adresy pre dané person_id
 $sqlAddress = "INSERT INTO Address (person_id, street, city) VALUES ($person_id, 'Hlavná 5', 'Košice');";
 mysqli_query($conn, $sqlAddress);
 ?&gt;</code></pre>
             </div>
-
-            <div class="card">
-                <h2>Bezpečné vyhľadávanie cez Prepared Statements (`LIKE`)</h2>
-                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
-$hladaj = '%' . $_GET['najdi'] . '%';
-
-$sql = "SELECT id, firstname, lastname FROM Person WHERE firstname LIKE ?";
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "s", $hladaj);
-mysqli_stmt_execute($stmt);
-
-$result = mysqli_stmt_get_result($stmt);
-while ($row = mysqli_fetch_assoc($result)) {
-    echo $row['firstname'] . " " . $row['lastname'] . "&lt;br&gt;";
-}
-mysqli_stmt_close($stmt);
-?&gt;</code></pre>
-            </div>
         </div>
 
-        <!-- TAB 4: ESP -->
-        <div id="esp-tab" class="tab-content">
+        <!-- TAB 4: ESP WiFi (AP / STA) -->
+        <div id="esp-wifi-tab" class="tab-content">
             <div class="card">
-                <h2>1. ESP ako Station (STA) – Pripojenie k domácej Wi-Fi</h2>
-                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt; // Pre ESP8266 použi &lt;ESP8266WiFi.h&gt;
+                <h2>1. ESP ako Station (STA)</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
 
-const char* ssid = "Moja_Domaca_WiFi";
-const char* password = "HesloDoWiFi123";
+const char* ssid = "Tvoja_WiFi_Siet";
+const char* password = "Tvoje_WiFi_Heslo";
 
 void setup() {
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
-  Serial.print("Pripájam sa k WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
 
-  Serial.println("\nPripojené!");
-  Serial.print("IP Adresa ESP: ");
-  Serial.println(WiFi.localIP());
+  Serial.println("\nPripojené! IP: " + WiFi.localIP().toString());
 }
 
 void loop() {}</code></pre>
             </div>
 
             <div class="card">
-                <h2>2. ESP ako Access Point (AP) – ESP vytvorí vlastnú sieť</h2>
+                <h2>2. ESP ako Access Point (AP)</h2>
                 <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
 
-const char* ap_ssid = "ESP_Konfiguracia";
-const char* ap_password = "heslo_ap_123"; // min 8 znakov
+const char* ap_ssid = "ESP_Vlastna_Siet";
+const char* ap_password = "moje_heslo_123";
 
 void setup() {
   Serial.begin(115200);
-  
-  // Spustenie AP režimu
   WiFi.softAP(ap_ssid, ap_password);
 
-  IPAddress myIP = WiFi.softAPIP();
-  Serial.print("Access Point spustený! IP Adresa: ");
-  Serial.println(myIP);
+  Serial.print("Access Point spustený! IP: ");
+  Serial.println(WiFi.softAPIP());
 }
 
 void loop() {}</code></pre>
             </div>
         </div>
 
-        <!-- TAB 5: TOOLS -->
+        <!-- TAB 5: ESP TCP & UDP -->
+        <div id="esp-tcp-udp-tab" class="tab-content">
+            <div class="card">
+                <h2>1. ESP ako TCP Server</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+
+WiFiServer server(8888);
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("ESP_Server", "12345678");
+  server.begin();
+}
+
+void loop() {
+  WiFiClient client = server.available();
+  if (client) {
+    while (client.connected()) {
+      while (client.available() > 0) {
+        char c = client.read();
+        Serial.write(c);
+      }
+      while (Serial.available() > 0) {
+        client.write(Serial.read());
+      }
+    }
+    client.stop();
+  }
+}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>2. ESP ako TCP Klient</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+
+const char* serverIP = "192.168.X.X"; // IP adresa tvojho servera
+const uint16_t serverPort = 8888;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin("Tvoja_WiFi_Siet", "Tvoje_WiFi_Heslo");
+  while (WiFi.status() != WL_CONNECTED) delay(500);
+
+  WiFiClient client;
+  if (client.connect(serverIP, serverPort)) {
+    Serial.println("Pripojené k TCP serveru!");
+    client.println("Ahoj zo strany ESP TCP Klienta!");
+    
+    while (client.connected() || client.available()) {
+      if (client.available()) {
+        String line = client.readStringUntil('\n');
+        Serial.println("Odpoveď: " + line);
+      }
+    }
+    client.stop();
+  }
+}
+
+void loop() {}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>3. ESP ako UDP Server / Receiver</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+#include &lt;WiFiUdp.h&gt;
+
+WiFiUDP udp;
+const unsigned int udpPort = 4567;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin("Tvoja_WiFi_Siet", "Tvoje_WiFi_Heslo");
+  while (WiFi.status() != WL_CONNECTED) delay(500);
+
+  udp.begin(udpPort);
+}
+
+void loop() {
+  int packetSize = udp.parsePacket();
+  if (packetSize) {
+    char buffer[255];
+    int len = udp.read(buffer, 254);
+    buffer[len] = '\0';
+    
+    Serial.print("Prijatá UDP správa od " + udp.remoteIP().toString() + ": ");
+    Serial.println(buffer);
+  }
+}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>4. ESP ako UDP Broadcast Sender</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+#include &lt;WiFiUdp.h&gt;
+
+WiFiUDP udp;
+const unsigned int udpPort = 4567;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("ESP_UDP_AP", "12345678");
+}
+
+void loop() {
+  IPAddress broadcast = WiFi.broadcastIP();
+  udp.beginPacket(broadcast, udpPort);
+  udp.print("My IP: ");
+  udp.print(WiFi.softAPIP());
+  udp.print(" | TCP port: 8888");
+  udp.endPacket();
+
+  delay(1000);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- TAB 6: ESP HTTP KLIENT -->
+        <div id="esp-http-tab" class="tab-content">
+            <div class="card">
+                <h2>1. HTTP GET & POST pomocou `WiFiClient` (Manuálna požiadavka)</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+
+const char* host = "tvoj-web-server.sk"; // Názov domény alebo IP
+const int port = 80;
+
+void sendGET() {
+  WiFiClient client;
+  if (client.connect(host, port)) {
+    client.println("GET /priečinok/index.php?get=1 HTTP/1.1");
+    client.print("Host: ");
+    client.println(host);
+    client.println("Connection: close");
+    client.println();
+
+    while (client.connected() || client.available()) {
+      if (client.available()) {
+        String line = client.readStringUntil('\n');
+        int index = line.indexOf("Led=");
+        if (index != -1) {
+          int jas = line.substring(index + 4).toInt();
+          Serial.println("Načítaný jas: " + String(jas));
+        }
+      }
+    }
+    client.stop();
+  }
+}
+
+void sendPOST() {
+  WiFiClient client;
+  if (client.connect(host, port)) {
+    String postData = "jas=180&status=ok";
+
+    client.println("POST /priečinok/index.php HTTP/1.1");
+    client.print("Host: ");
+    client.println(host);
+    client.println("Content-Type: application/x-www-form-urlencoded");
+    client.print("Content-Length: ");
+    client.println(postData.length());
+    client.println("Connection: close");
+    client.println();
+    client.print(postData);
+
+    client.stop();
+  }
+}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>2. HTTP GET / POST pomocou knižnice `HTTPClient.h` & Basic Auth</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+#include &lt;HTTPClient.h&gt;
+
+const char* serverUrl = "http://tvoj-web-server.sk/get_action.php";
+
+void httpGetExample() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(serverUrl);
+    
+    // HTTP Basic Auth autorizácia (Meno, Heslo)
+    http.setAuthorization("prihlasovacie_meno", "prihlasovacie_heslo");
+
+    int httpCode = http.GET();
+    if (httpCode == 200) {
+      String payload = http.getString();
+      Serial.println("Odpoveď: " + payload);
+    } else {
+      Serial.println("Chyba HTTP: " + String(httpCode));
+    }
+    http.end();
+  }
+}
+
+void httpPostExample() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin("http://tvoj-web-server.sk/post_action.php");
+    
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    http.setAuthorization("prihlasovacie_meno", "prihlasovacie_heslo");
+
+    int httpCode = http.POST("jas=200&stlacene=1");
+    if (httpCode > 0) {
+      String response = http.getString();
+      Serial.println("Odpoveď zo servera: " + response);
+    }
+    http.end();
+  }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- TAB 7: TOOLS -->
         <div id="tools-tab" class="tab-content">
             <div class="card">
                 <h2>⚙️ Interaktívny Generátor C++ Kódu pre ESP</h2>
-                <p>Zadaj požadované údaje pre Wi-Fi a okamžite získaš pripravený kód pre Arduino IDE:</p>
-
                 <div class="interactive-box">
                     <label>Režim Wi-Fi:</label>
                     <select id="gen-mode" onchange="generateESPCode()">
@@ -387,7 +539,6 @@ void loop() {}</code></pre>
             document.getElementById('esp-output-code').innerText = code;
         }
 
-        // Inicializácia generátora kódu pri načítaní
         generateESPCode();
     </script>
 </body>
