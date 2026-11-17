@@ -194,7 +194,7 @@
             <div class="card">
                 <h2>1. PHP Kontrola Vstupov a Presmerovanie (`header`)</h2>
                 <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
-if (empty($_GET['meno']) \vert{}\vert{} empty($_GET['kraj'])) {
+if (empty($_GET['meno']) || empty($_GET['kraj'])) {
     header('Location: index.php?chyba=1');
     exit();
 }
@@ -206,19 +206,19 @@ echo "Vítaj, " . htmlspecialchars($_GET['meno']);
             <div class="card">
                 <h2>2. Čítanie poslednej hodnoty z databázy (napr. pre ESP)</h2>
                 <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
-require 'db.php'; // Obsahuje $server,$user, $pwd,$db
+require 'db.php'; // Obsahuje $server, $user, $pwd, $db
 
 $jas = 127; // Predvolená hodnota
 
 try {
-    $conn = mysqli_connect($server,$user, $pwd,$db);
+    $conn = mysqli_connect($server, $user, $pwd, $db);
     
     // Výber posledného záznamu podľa najvyššieho ID
     $sql = "SELECT jas FROM LED ORDER BY id DESC LIMIT 1";
-    $result = mysqli_query($conn,$sql);
+    $result = mysqli_query($conn, $sql);
 
     if ($result &amp;&amp; $row = mysqli_fetch_assoc($result)) {
-        $jas =$row['jas'];
+        $jas = $row['jas'];
     }
 
     mysqli_close($conn);
@@ -235,29 +235,30 @@ echo "Led=" . $jas;
                 <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
 require 'db.php';
 
-$najdi = trim($_GET['najdi'] ?? '');$vysledky = [];
+$najdi = trim($_GET['najdi'] ?? '');
+$vysledky = [];
 
-$conn = mysqli_connect($server,$user, $pwd,$db);
+$conn = mysqli_connect($server, $user, $pwd, $db);
 
 if (!empty($najdi)) {
     // Bezpečné vyhľadávanie pomocou Prepared Statement (LIKE)
     $sql = "SELECT id, firstname, lastname, birthday FROM Person WHERE firstname LIKE ?";
-    $stmt = mysqli_prepare($conn,$sql);
+    $stmt = mysqli_prepare($conn, $sql);
     
-    $searchPattern = '\%' .$najdi . '%';
+    $searchPattern = '%' . $najdi . '%';
     mysqli_stmt_bind_param($stmt, "s", $searchPattern);
     mysqli_stmt_execute($stmt);
     
     $result = mysqli_stmt_get_result($stmt);
     while ($row = mysqli_fetch_assoc($result)) {
-        $vysledky[] =$row;
+        $vysledky[] = $row;
     }
     mysqli_stmt_close($stmt);
 } else {
     // Načítanie všetkých záznamov
     $result = mysqli_query($conn, "SELECT id, firstname, lastname, birthday FROM Person");
     while ($row = mysqli_fetch_assoc($result)) {
-        $vysledky[] =$row;
+        $vysledky[] = $row;
     }
 }
 
@@ -275,7 +276,7 @@ mysqli_close($conn);
         &lt;/tr&gt;
     &lt;/thead&gt;
     &lt;tbody&gt;
-        &lt;?php foreach ($vysledky as$osoba): ?&gt;
+        &lt;?php foreach ($vysledky as $osoba): ?&gt;
             &lt;tr&gt;
                 &lt;td&gt;&lt;?= $osoba['id'] ?&gt;&lt;/td&gt;
                 &lt;td&gt;&lt;?= htmlspecialchars($osoba['firstname'] ?? '') ?&gt;&lt;/td&gt;
@@ -295,15 +296,16 @@ mysqli_close($conn);
                 <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>&lt;?php
 require 'db.php';
 
-$meno = mysqli_real_escape_string($conn, $_POST['meno']);$narod = !empty($_POST['narodeniny']) ? "'" . $_POST['narodeniny'] . "'" : "NULL";
+$meno = mysqli_real_escape_string($conn, $_POST['meno']);
+$narod = !empty($_POST['narodeniny']) ? "'" . $_POST['narodeniny'] . "'" : "NULL";
 
-$sql = "INSERT INTO Person (firstname, birthday) VALUES ('$meno',$narod);";
-mysqli_query($conn,$sql);
+$sql = "INSERT INTO Person (firstname, birthday) VALUES ('$meno', $narod);";
+mysqli_query($conn, $sql);
 
 $person_id = mysqli_insert_id($conn);
 
 $sqlAddress = "INSERT INTO Address (person_id, street, city) VALUES ($person_id, 'Hlavná 5', 'Košice');";
-mysqli_query($conn,$sqlAddress);
+mysqli_query($conn, $sqlAddress);
 ?&gt;</code></pre>
             </div>
 
@@ -388,4 +390,344 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
   &lt;title&gt;ESP32 WebServer&lt;/title&gt;
 &lt;/head&gt;
 &lt;body&gt;
-  &lt;h2&gt;Ovládanie
+  &lt;h2&gt;Ovládanie ESP32&lt;/h2&gt;
+  &lt;p&gt;&lt;a href="/on"&gt;&lt;button&gt;Zapnúť LED&lt;/button&gt;&lt;/a&gt; &lt;a href="/off"&gt;&lt;button&gt;Vypnúť LED&lt;/button&gt;&lt;/a&gt;&lt;/p&gt;
+  
+  &lt;form method="POST" action="/nastav"&gt;
+    &lt;label&gt;Jas LED (0 - 255):&lt;/label&gt;
+    &lt;input type="range" name="jas" min="0" max="255" value="127"&gt;
+    &lt;input type="submit" value="Uložiť jas"&gt;
+  &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+)rawliteral";
+
+void handleRoot() {
+  server.send(200, "text/html", HTML_PAGE);
+}
+
+void handleLedOn() {
+  digitalWrite(LED_PIN, HIGH);
+  // Presmerovanie späť na úvodnú stránku
+  server.sendHeader("Location", "/");
+  server.send(303);
+}
+
+void handleLedOff() {
+  digitalWrite(LED_PIN, LOW);
+  server.sendHeader("Location", "/");
+  server.send(303);
+}
+
+void handleNastav() {
+  if (server.hasArg("jas")) {
+    jas = server.arg("jas").toInt();
+    analogWrite(LED_PIN, jas);
+    Serial.println("Nový jas: " + String(jas));
+  }
+  server.sendHeader("Location", "/");
+  server.send(303);
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nIP adresa ESP WebServera: " + WiFi.localIP().toString());
+
+  // Definícia URL trás (endpoints)
+  server.on("/", handleRoot);
+  server.on("/on", handleLedOn);
+  server.on("/off", handleLedOff);
+  server.on("/nastav", HTTP_POST, handleNastav);
+
+  server.begin();
+}
+
+void loop() {
+  server.handleClient(); // Neustála obsluha prichádzajúcich požiadaviek
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- TAB 6: ESP TCP & UDP -->
+        <div id="esp-tcp-udp-tab" class="tab-content">
+            <div class="card">
+                <h2>1. ESP ako TCP Server</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+
+WiFiServer server(8888);
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("ESP_Server", "12345678");
+  server.begin();
+}
+
+void loop() {
+  WiFiClient client = server.available();
+  if (client) {
+    while (client.connected()) {
+      while (client.available() &gt; 0) {
+        char c = client.read();
+        Serial.write(c);
+      }
+      while (Serial.available() &gt; 0) {
+        client.write(Serial.read());
+      }
+    }
+    client.stop();
+  }
+}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>2. ESP ako TCP Klient</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+
+const char* serverIP = "192.168.X.X"; // IP adresa tvojho servera
+const uint16_t serverPort = 8888;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin("Tvoja_WiFi_Siet", "Tvoje_WiFi_Heslo");
+  while (WiFi.status() != WL_CONNECTED) delay(500);
+
+  WiFiClient client;
+  if (client.connect(serverIP, serverPort)) {
+    Serial.println("Pripojené k TCP serveru!");
+    client.println("Ahoj zo strany ESP TCP Klienta!");
+
+    while (client.connected() || client.available()) {
+      if (client.available()) {
+        String line = client.readStringUntil('\n');
+        Serial.println("Odpoveď: " + line);
+      }
+    }
+    client.stop();
+  }
+}
+
+void loop() {}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>3. ESP ako UDP Server / Receiver</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+#include &lt;WiFiUdp.h&gt;
+
+WiFiUDP udp;
+const unsigned int udpPort = 4567;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin("Tvoja_WiFi_Siet", "Tvoje_WiFi_Heslo");
+  while (WiFi.status() != WL_CONNECTED) delay(500);
+
+  udp.begin(udpPort);
+}
+
+void loop() {
+  int packetSize = udp.parsePacket();
+  if (packetSize) {
+    char buffer[255];
+    int len = udp.read(buffer, 254);
+    buffer[len] = '\0';
+
+    Serial.print("Prijatá UDP správa od " + udp.remoteIP().toString() + ": ");
+    Serial.println(buffer);
+  }
+}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>4. ESP ako UDP Broadcast Sender</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+#include &lt;WiFiUdp.h&gt;
+
+WiFiUDP udp;
+const unsigned int udpPort = 4567;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("ESP_UDP_AP", "12345678");
+}
+
+void loop() {
+  IPAddress broadcast = WiFi.broadcastIP();
+  udp.beginPacket(broadcast, udpPort);
+  udp.print("My IP: ");
+  udp.print(WiFi.softAPIP());
+  udp.print(" | TCP port: 8888");
+  udp.endPacket();
+
+  delay(1000);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- TAB 7: ESP HTTP KLIENT -->
+        <div id="esp-http-tab" class="tab-content">
+            <div class="card">
+                <h2>1. HTTP GET &amp; POST pomocou `WiFiClient` (Manuálna požiadavka)</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+
+const char* host = "tvoj-web-server.sk"; // Názov domény alebo IP
+const int port = 80;
+
+void sendGET() {
+  WiFiClient client;
+  if (client.connect(host, port)) {
+    client.println("GET /priecinok/index.php?get=1 HTTP/1.1");
+    client.print("Host: ");
+    client.println(host);
+    client.println("Connection: close");
+    client.println();
+
+    while (client.connected() || client.available()) {
+      if (client.available()) {
+        String line = client.readStringUntil('\n');
+        int index = line.indexOf("Led=");
+        if (index != -1) {
+          int jas = line.substring(index + 4).toInt();
+          Serial.println("Načítaný jas: " + String(jas));
+        }
+      }
+    }
+    client.stop();
+  }
+}
+
+void sendPOST() {
+  WiFiClient client;
+  if (client.connect(host, port)) {
+    String postData = "jas=180&amp;status=ok";
+
+    client.println("POST /priecinok/index.php HTTP/1.1");
+    client.print("Host: ");
+    client.println(host);
+    client.println("Content-Type: application/x-www-form-urlencoded");
+    client.print("Content-Length: ");
+    client.println(postData.length());
+    client.println("Connection: close");
+    client.println();
+    client.print(postData);
+
+    client.stop();
+  }
+}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>2. HTTP GET / POST pomocou knižnice `HTTPClient.h` &amp; Basic Auth</h2>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code>#include &lt;WiFi.h&gt;
+#include &lt;HTTPClient.h&gt;
+
+const char* serverUrl = "http://tvoj-web-server.sk/get_action.php";
+
+void httpGetExample() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(serverUrl);
+
+    // HTTP Basic Auth autorizácia (Meno, Heslo)
+    http.setAuthorization("prihlasovacie_meno", "prihlasovacie_heslo");
+
+    int httpCode = http.GET();
+    if (httpCode == 200) {
+      String payload = http.getString();
+      Serial.println("Odpoveď: " + payload);
+    } else {
+      Serial.println("Chyba HTTP: " + String(httpCode));
+    }
+    http.end();
+  }
+}
+
+void httpPostExample() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin("http://tvoj-web-server.sk/post_action.php");
+
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    http.setAuthorization("prihlasovacie_meno", "prihlasovacie_heslo");
+
+    int httpCode = http.POST("jas=200&amp;stlacene=1");
+    if (httpCode &gt; 0) {
+      String response = http.getString();
+      Serial.println("Odpoveď zo servera: " + response);
+    }
+    http.end();
+  }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- TAB 8: TOOLS -->
+        <div id="tools-tab" class="tab-content">
+            <div class="card">
+                <h2>⚙️ Interaktívny Generátor C++ Kódu pre ESP</h2>
+                <div class="interactive-box">
+                    <label>Režim Wi-Fi:</label>
+                    <select id="gen-mode" onchange="generateESPCode()">
+                        <option value="STA">Station (Pripojenie k routeru)</option>
+                        <option value="AP">Access Point (Vlastná Wi-Fi sieť)</option>
+                    </select>
+
+                    <label>SSID (Názov siete):</label>
+                    <input type="text" id="gen-ssid" value="MojaSiet" oninput="generateESPCode()">
+
+                    <label>Heslo:</label>
+                    <input type="password" id="gen-pass" value="mojeHeslo123" oninput="generateESPCode()">
+                </div>
+
+                <h3>Vygenerovaný C++ kód:</h3>
+                <pre><button class="copy-btn" onclick="copyCode(this)">Kopírovať</button><code id="esp-output-code"></code></pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function copyCode(btn) {
+            const code = btn.nextElementSibling.innerText;
+            navigator.clipboard.writeText(code);
+            btn.innerText = "Kopírované!";
+            setTimeout(() => btn.innerText = "Kopírovať", 2000);
+        }
+
+        function generateESPCode() {
+            const mode = document.getElementById('gen-mode').value;
+            const ssid = document.getElementById('gen-ssid').value;
+            const pass = document.getElementById('gen-pass').value;
+
+            let code = "";
+            if (mode === "STA") {
+                code = `#include <WiFi.h>\n\nconst char* ssid = "${ssid}";\nconst char* password = "${pass}";\n\nvoid setup() {\n  Serial.begin(115200);\n  WiFi.mode(WIFI_STA);\n  WiFi.begin(ssid, password);\n\n  while (WiFi.status() != WL_CONNECTED) {\n    delay(500);\n    Serial.print(".");\n  }\n  Serial.println("\\nPripojené! IP: " + WiFi.localIP().toString());\n}\n\nvoid loop() {}`;
+            } else {
+                code = `#include <WiFi.h>\n\nconst char* ap_ssid = "${ssid}";\nconst char* ap_password = "${pass}";\n\nvoid setup() {\n  Serial.begin(115200);\n  WiFi.softAP(ap_ssid, ap_password);\n  Serial.println("AP spustený! IP: " + WiFi.softAPIP().toString());\n}\n\nvoid loop() {}`;
+            }
+
+            document.getElementById('esp-output-code').innerText = code;
+        }
+
+        generateESPCode();
+    </script>
+</body>
+</html>
